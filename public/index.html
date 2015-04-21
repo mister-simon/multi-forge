@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">	
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Multi-Forge-Asteroids: Fasteroids!</title>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+	<link rel="icon" href="favicon32x32.ico" type="image/x-icon" />
+	<link rel="shortcut icon" href="favicon32x32.ico" type="image/x-icon" />
+	<link rel="icon" href="favicon.ico" type="image/x-icon" />
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+</head>
+<body>
+	<div class="container">
+
+		<noscript>
+			<p>Javascript is required to use... Just about any of this page. Please enable it or upgrade your browser or something.</p>
+		</noscript>
+
+		<div class="fasteroids" id="fasteroids"></div>
+
+		<div class="hidden">
+		<h1>Fasteroids</h1>
+			<h2>How to Play</h2>
+			<p>Simple: Arrow keys and space.</p>
+	
+			<h2>What's a Fasteroid Anyway?!</h2>
+			<p>This is the demo game for Multi-Forge. A pretty sweet multiplayer server, designed for HTML5 games.</p>
+			<p>Forge-Asteroids... F-Asteroids... Fasteroids. See!?</p>
+		</div>
+	</div>
+
+	<!-- Grab sockets + phaser -->
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://cdn.jsdelivr.net/phaser/2.3.0/phaser.js"></script>
+
+    <!-- Add Multi-Forge-Client scripts -->
+    <script src="js/multi-forge-client/eventEmitter.min.js"></script>
+    <script src="js/multi-forge-client/lib.js"></script>
+    <script src="js/multi-forge-client/connection.js"></script>
+
+    <!-- Go ahead with game stuff -->
+    <script src="js/config.js"></script>
+    <script src="js/disconnected.js"></script>
+    <script src="js/preloader.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/game.js"></script>
+
+    <!-- Make it go -->
+    <script src="js/fasteroids.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+@font-face {
+    font-family: 'Pixelated';
+    src:url('font/Pixelated.ttf.woff') format('woff'),
+        url('font/Pixelated.ttf.svg#Pixelated') format('svg'),
+        url('font/Pixelated.ttf.eot'),
+        url('font/Pixelated.ttf.eot?#iefix') format('embedded-opentype'); 
+    font-weight: normal;
+    font-style: normal;
+}
+
+*{
+	font-family: 'Pixelated';
+	margin: 0;
+	padding: 0;
+}
+h1{
+	color: #00CA00;
+}
+h2{
+	color: #009900;
+}
+h1, h2{
+	margin: 0;
+	padding: 10px 0;
+}
+p {
+	padding: 10px;
+	padding-top: 0;
+}
+
+.listWrap{
+	border: 1px solid #EFEFEF;
+	padding: 1em;
+}
+
+.listWrap ul{
+	list-style:none;
+	margin: 0; padding: 0;
+}
+
+/* Lobby List */
+.btn{
+	cursor: pointer;
+	color: blue;
+}
+.hidden{
+	display: none;
+}
+
+/* Player List */
+.host:after{
+	content: " ♔";
+}
+.you:before{
+	content: "-> ";
+}
+.inactive{
+	text-decoration: line-through;
+}
+
+body{
+	color: #EFEFEF;
+	background: #666;
+}
+.container{
+	border: 1px solid #111;
+	color: #EFEFEF;
+	background: #222;
+	width: 1000px;
+	padding: 10px;
+	margin: 0 auto;
+	max-width: 95%;
+}
+.fasteroids{
+	display: inline-block;
+	text-align: center;
+}
+.fasteroids canvas{
+	max-width: 100%;
+}

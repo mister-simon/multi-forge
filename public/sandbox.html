@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">	
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Testing!</title>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+</head>
+<body>
+	<h1>Multi-Forge Sandbox</h1>
+
+	<noscript>
+		<p>Javascript is required to use... Just about any of this page. Please enable it or upgrade your browser or something.</p>
+	</noscript>
+
+	<div class="listWrap">
+		<h2>Lobbies</h2>
+		<ul id="lobbyList"><li>Loading Lobbies</li></ul>
+		<a id="lobbyListLeave">Leave Current Lobby</a>
+	</div>
+
+	<div class="listWrap">
+		<h2>Players</h2>
+		<ul id="playerList"><li>Join a Multi-Forge Lobby</li></ul>
+	</div>
+
+	<script src="js/gameLib/eventEmitter.min.js"></script>
+    <script src="js/gameLib/lib.js"></script>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="js/gameLib/connections.js" type="text/javascript"></script>
+
+    <script src="js/gameLib/lobbyList.js"></script>
+    <script src="js/gameLib/playerList.js"></script>
+
+    <script src="//cdn.jsdelivr.net/phaser/2.3.0/phaser.js"></script>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
