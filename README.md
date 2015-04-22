@@ -15,7 +15,7 @@ With that said, check the content below for a full explanation of what the serve
 
 ## Getting Started
 
-Make sure you've got node installed, you can [Find Node Here](https://nodejs.org/).
+Make sure you've got node installed, you can [Find Node Here](https://nodejs.org/). Then from the terminal, run:
 
 ```bash
 npm install

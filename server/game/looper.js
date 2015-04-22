@@ -8,16 +8,18 @@ module.exports = (function(){
     }
 
     Looper.prototype.stop = function(){
-        console.log("Stopping loop!");
+        // console.log("Stopping loop!");
         this.playing = false;
+        return this;
     };
 
     Looper.prototype.start =
     Looper.prototype.play = function(){
-        console.log("Starting loop!");
+        // console.log("Starting loop!");
         this.playing = true;
         this.last = Date.now()-this.refreshRate;
         this.loop();
+        return this;
     };
 
     Looper.prototype.loop = function(){
@@ -30,12 +32,9 @@ module.exports = (function(){
             this.ticks++;
             this.step(this.ticks);
             this.last = cur;
-        }
-
-        if(diff < this.refreshRate){
-            setTimeout(this.loop.bind(this));
-        } else {
             setImmediate(this.loop.bind(this));
+        } else {
+            setTimeout(this.loop.bind(this));
         }
     };
 
