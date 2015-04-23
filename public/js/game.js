@@ -4,7 +4,6 @@ var Game = (function(){
 
 	var nextBullet = 0,
 		bulletWait = 250,
-		rotOffset = Math.PI * 0.75,
 		entityCounter = 0,
 		livingBullets = [];
 
@@ -27,6 +26,8 @@ var Game = (function(){
 
     	// Reset players
     	this.resetPlayers();
+    	
+		// this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
 	};
 
 	Game.prototype.playersUpdate = function(players){
@@ -198,7 +199,7 @@ var Game = (function(){
 			myShip = gameData.me.ship.sprite;
 
 		if (gameData.keys.up.isDown){
-			this.game.physics.arcade.accelerationFromRotation(myShip.rotation - rotOffset, 300, myShip.body.acceleration);
+			this.game.physics.arcade.accelerationFromRotation(myShip.rotation - config.playerSprites.rotationOffset, 300, myShip.body.acceleration);
 			myShip.frame = myData.spriteFrames.on;
 		} else {
 			myShip.frame = myData.spriteFrames.off;
@@ -267,7 +268,7 @@ var Game = (function(){
 				bullet.angle = ship.sprite.angle;
 
 				// Velocity
-				this.game.physics.arcade.velocityFromRotation(ship.sprite.rotation - rotOffset, 400, bullet.body.velocity);
+				this.game.physics.arcade.velocityFromRotation(ship.sprite.rotation - config.playerSprites.rotationOffset, 400, bullet.body.velocity);
 				bullet.body.velocity.add(ship.sprite.body.velocity.x,ship.sprite.body.velocity.y);
 
 				nextBullet = this.game.time.now + bulletWait;

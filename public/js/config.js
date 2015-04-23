@@ -19,6 +19,7 @@ var config = {
 	},
 	font:'Pixelated',
 	playerSprites:{
+		rotationOffset:Math.PI * 0.75,
 		colours:{
 			red:{ off:0, on:1 },
 			orange:{ off:2, on:3 },
