@@ -104,6 +104,9 @@ connection.on('connect',function(){
 	function joinedLobby(details){
 		// Store details
 		lobbyDetails = details;
+
+		// Add a little flag to check when the game has been updated
+		lobbyDetails.gameState.updated = true;
 		
 		// Reset the entity counter when you join.
 		// You'll need this later.
@@ -153,6 +156,8 @@ connection.on('connect',function(){
 	connection.on('game.serverUpdate',function(updates){
 		lobbyDetails.gameState.players = updates.players;
 		lobbyDetails.gameState.entities = updates.entities;
+
+		lobbyDetails.gameState.updated = true;
 	});
 
 	// Make some player data to play with
@@ -194,12 +199,36 @@ connection.on('connect',function(){
 	setInterval(updateGame,1000/60);
 
 	function updateGame(){
-		if(yourId !== null){
-			var isLobbied = (yourId !== null),
-				isPlaying = (lobbyDetails.gameState.meta.state === 'playing');
+		var isLobbied = (yourId !== null),
+		if(isLobbied){
+			var isPlaying = (lobbyDetails.gameState.meta.state === 'playing');
 
-			if(isLobbied && isPlaying){
+			// If you're both in a lobby and playing a game,
+			// 	you know you're good to send updates
+			if(isPlaying){
 				sendPlayerUpdate();
+
+				// You might also want to render server updates here :)
+				if(lobbyDetails.gameState.updated === true){
+					var players = lobbyDetails.gameState.players;
+					var entities = lobbyDetails.gameState.entities;
+
+					for(var id in players){
+						var player = players[id];
+						if(player.id === yourId) continue;
+						
+						// Do something with all the players
+					}
+					for(var id in entities){
+						var player = players[id];
+						
+						// Do something with all the entities
+					}
+
+					// Don't bother re-processing data.
+					// This is a good if your entities have velocity.
+					lobbyDetails.gameState.updated = false;
+				}
 			}
 		}
 	}
