@@ -19,6 +19,7 @@ module.exports = {
 
 	// Game rules
 	rules: {
+		guestsSoftDeleteEntities: false,
 		bullet:{
 			maxPerPlayer: 50,
 			minCreateDelay: 300,

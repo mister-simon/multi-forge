@@ -29,6 +29,8 @@ var Menu = (function(){
 		var lobbyLength = gameData.lobbyTypes.length;
 
 		if(lobbyLength > 0){
+			var repetitions = 0;
+
 			for(var i=0; i < lobbyLength; i++){
 				var lobbyName = gameData.lobbyTypes[i],
 					selected = (i===0);
@@ -77,25 +79,34 @@ var Menu = (function(){
 
 		var ships = {};
 
-		for (var i = 0, l = colours.length; i < l; i++) {
-			// Grab data for specific ship
-			var colour = colours[i],
-				spriteFrames = sprites.colours[colour],
-				spriteStart = sprites.startPos[colour],
-				spriteScore = sprites.scorePos[colour];
 
-			// Create ship sprite
-			var sprite = this.game.add.sprite(spriteStart.x, spriteStart.y, 'player', spriteFrames.on);
-			this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+		for (var r = 0; r < 5; r++) {
+			for (var i = 0, l = colours.length; i < l; i++) {
+				// Grab data for specific ship
+				var colour = colours[i],
+					spriteFrames = sprites.colours[colour],
+					spriteStart = sprites.startPos[colour];
 
-			sprite.anchor.set(0.5);
-			sprite.rotation = spriteStart.r;
-		    sprite.body.maxVelocity.set(500);
-		    sprite.body.drag.set(50);
+				// Create ship sprite
+				var sprite = this.game.add.sprite(spriteStart.x, spriteStart.y, 'player', spriteFrames.on);
+				this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
 
-			// Store data
-			ships[colour] = sprite;
-		}
+				sprite.anchor.set(0.5);
+				sprite.rotation = spriteStart.r;
+
+				sprite.body.maxAngular = 300;
+			    sprite.body.maxVelocity.set(500);
+			    sprite.body.drag.set(50);
+			    sprite.alpha = 0.3;
+
+			    sprite.spriteFrames = spriteFrames;
+
+				// Store data
+				ships[colour+r] = sprite;
+			}
+		};
+
+
 
 		this.ships = ships;
 	};
@@ -128,31 +139,17 @@ var Menu = (function(){
 				spriteFrames = config.playerSprites.colours[colour],
 				sprite = this.ships[colour];
 
-			var accell = Math.round(Math.random()*300) - 200;
+			var accell = (Math.random()*300) - 200 << 0;
 			if(accell > 0){
 				this.game.physics.arcade.accelerationFromRotation(sprite.rotation - config.playerSprites.rotationOffset, accell, sprite.body.acceleration);
 			}
 
 			sprite.body.angularVelocity += (Math.round(Math.random()*50) - 25);
 
-			if(sprite.body.angularVelocity > 300){
-				sprite.body.angularVelocity = 300;
-			}
-			if(sprite.body.angularVelocity < -300){
-				sprite.body.angularVelocity = -300;
-			}
-
 			if(accell > 50){
-				sprite.frame = spriteFrames.on;
+				sprite.frame = sprite.spriteFrames.on;
 			} else {
-				sprite.frame = spriteFrames.off;
-			}
-
-			if(sprite.body.velocity.x < 0){
-				sprite.body.velocity.x = 0;
-			}
-			if(sprite.body.velocity.y < 0){
-				sprite.body.velocity.y = 0;
+				sprite.frame = sprite.spriteFrames.off;
 			}
 
 			this.screenWrap(sprite);

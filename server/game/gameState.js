@@ -120,7 +120,7 @@ GameState.prototype.createEntity = function(lobbyPlayer, data){
 	var dataCopy = copy(data);
 
 	dataCopy.createdByPlayerId = lobbyPlayer.id;
-	// dataCopy.destroyedByPlayerId = null;
+	dataCopy.destroyedByPlayerId = null;
 
 	this.updatedEntities[entityId] = dataCopy;
 
@@ -148,12 +148,12 @@ GameState.prototype.destroyEntity = function(lobbyPlayer, data){
 
 	if(!has(data.serverId)){ return { msg: 'No serverId provided.' }; }
 
-	delete this.updatedEntities[data.serverId];
 
-	/*if(typeof KILL === 'undefined'){
-		KILL = true;
-		console.log("Killed",data.serverId);
-	}*/
+	if(lobbyPlayer.isHost === false && this.config.rules.guestsSoftDeleteEntities === true){
+		this.updatedEntities[data.serverId].destroyedByPlayerId = lobbyPlayer.id;
+	} else {
+		delete this.updatedEntities[data.serverId];
+	}
 
 	// Tell lobby it was successful
 	return true;
@@ -233,7 +233,7 @@ GameState.prototype.update = function(lobbyPlayer, data){
 				// Reapply any server critical info
 				this.updatedEntities[entityId].serverId				= curEntity.serverId;
 				this.updatedEntities[entityId].createdByPlayerId	= curEntity.createdByPlayerId;
-				// this.updatedEntities[entityId].destroyedByPlayerId	= curEntity.destroyedByPlayerId;
+				this.updatedEntities[entityId].destroyedByPlayerId	= curEntity.destroyedByPlayerId;
 			}
 		}
 	}

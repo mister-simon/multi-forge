@@ -173,7 +173,7 @@ describe('Game state module', function () {
 	
 	describe('"playing" state updates', function () {
 		beforeEach(function(){
-			createGameState(gameStateConfig);
+			createGameState(copy(gameStateConfig));
 			lobby.mockPlayerListUpdate(mockFullPlayerList);
 			gameState.prepare();
 			gameState.start();
@@ -246,8 +246,12 @@ describe('Game state module', function () {
 		});
 
 		// Destroy entities
-		it.skip("should mark Guest's entities for deletion when deleted by Guest", function() {
+		var softDeletesOriginal = gameStateConfig.rules.guestsSoftDeleteEntities;
+
+		it("should softdelete entities when deleted by Guest", function(){
 			mockEntity.serverId = mockGuestPlayer.id + '-' + 0;
+
+			gameState.config.rules.guestsSoftDeleteEntities = true;
 
 			gameState.createEntity(mockGuestPlayer, mockEntity);
 			gameState.destroyEntity(mockGuestPlayer, mockEntity);
@@ -255,6 +259,19 @@ describe('Game state module', function () {
 			var updatedEntity = gameState.getUpdated().entities[mockEntity.serverId];
 			updatedEntity.should.have.property('destroyedByPlayerId',mockGuestPlayer.id);
 		});
+
+
+		it("should delete an entity when deleted by Guest", function(){
+			mockEntity.serverId = mockGuestPlayer.id + '-' + 0;
+
+			gameState.config.rules.guestsSoftDeleteEntities = false;
+
+			gameState.createEntity(mockGuestPlayer, mockEntity);
+			gameState.destroyEntity(mockGuestPlayer, mockEntity);
+
+			gameState.getUpdated().entities.should.not.have.property(mockEntity.serverId);
+		});
+
 
 		it('should accept deletions of entities from Host', function() {
 			mockEntity.serverId = mockHostPlayer.id + '-' + 0;

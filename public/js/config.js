@@ -31,9 +31,9 @@ var config = {
 
 var spriteSize = 47;
 config.playerSprites.startPos = {
-	red: 	{ x: spriteSize,					y: spriteSize,					r: Phaser.Math.degToRad(180)		},
-	orange: { x: config.size.w - spriteSize, 	y: spriteSize, 					r: Phaser.Math.degToRad(270)			},
-	purple: { x: config.size.w - spriteSize, 	y: config.size.h - spriteSize,	r: Phaser.Math.degToRad(0)			},
+	red: 	{ x: spriteSize,					y: spriteSize,					r: Phaser.Math.degToRad(180)	},
+	orange: { x: config.size.w - spriteSize, 	y: spriteSize, 					r: Phaser.Math.degToRad(270)	},
+	purple: { x: config.size.w - spriteSize, 	y: config.size.h - spriteSize,	r: Phaser.Math.degToRad(0)		},
 	pink: 	{ x: spriteSize, 					y: config.size.h - spriteSize,	r: Phaser.Math.degToRad(90)		},
 };
 

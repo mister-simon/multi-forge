@@ -51,4 +51,16 @@ describe('Game Loop module', function () {
 		},500);
 
 	});
+
+	it('should fire a callback each loop', function () {
+		var counter = 0;
+
+		function incrementer(){
+			counter++;
+		}
+
+		var loop = new looper(incrementer,1000).play();
+
+		counter.should.be.above(0);
+	});
 });
