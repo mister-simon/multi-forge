@@ -80,7 +80,7 @@ var Menu = (function(){
 		var ships = {};
 
 
-		for (var r = 0; r < 5; r++) {
+		for (var r = 0; r < 4; r++) {
 			for (var i = 0, l = colours.length; i < l; i++) {
 				// Grab data for specific ship
 				var colour = colours[i],
