@@ -38,11 +38,6 @@ GameState.prototype.step = function() {
 	this.players = copy(this.updatedPlayers);
 	this.entities = copy(this.updatedEntities);
 
-	/*if(typeof SENT !== 'undefined' && typeof FOOD_OVER_MANY_YEARS === 'undefined'){
-		FOOD_OVER_MANY_YEARS = true;
-		console.log(this.entities);
-	}*/
-
 
 	return this.getCurrent();
 };
@@ -123,12 +118,7 @@ GameState.prototype.createEntity = function(lobbyPlayer, data){
 	dataCopy.destroyedByPlayerId = null;
 
 	this.updatedEntities[entityId] = dataCopy;
-
-	/*if(typeof SENT === 'undefined'){
-		SENT = true;
-		console.log(this.updatedEntities[entityId]);
-	}*/
-
+	
 	// Iterate that ID
 	this.playerEntityIds[lobbyPlayer.id] += 1;
 	
