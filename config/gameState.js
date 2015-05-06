@@ -14,7 +14,7 @@ module.exports = {
 	// the server will accept
 	entityPermissions: {
 		public: ["bullet"],
-		host: ["asteroid"]
+		host: ["large-asteroid", "small-asteroid"]
 	},
 
 	// Game rules

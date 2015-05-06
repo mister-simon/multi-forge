@@ -8,32 +8,25 @@ var Menu = (function(){
 		// Lets have some fun
     	this.game.physics.startSystem(Phaser.Physics.ARCADE);
 		this.addRandomSpaceShips();
+		this.addRandomAsteroids();
 
     	// Add the overlay to create a double background effect
 		this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
 
-
-		// Ensure you're not in a lobby
-		gameData.lobbyData = null;
-		connection.send('lobby','leave');
+		// Add teh rest
+		this.game.add.sprite(180, 70, 'title');
 
 		// Render the buttons
 		this.renderButtons();
-
-		// Add teh rest
-		this.game.add.sprite(180, 70, 'title');
 	};
 
 	Menu.prototype.renderButtons = function(){
 		// Make some buttons for available lobby types
-		var lobbyLength = gameData.lobbyTypes.length;
+		var lobbyLength = serverData.lobbies.length;
 
 		if(lobbyLength > 0){
-			var repetitions = 0;
-
 			for(var i=0; i < lobbyLength; i++){
-				var lobbyName = gameData.lobbyTypes[i],
-					selected = (i===0);
+				var lobbyName = serverData.lobbies[i];
 
 				var text = this.add.text(config.hsize.w, (config.hsize.h / 1.15) + (100 * i), lobbyName, config.text.menu);
 				text.anchor.setTo(0.5, 0.5);
@@ -42,21 +35,21 @@ var Menu = (function(){
 
     			// Hover events - Over
     			text.events.onInputOver.add(function(text){
-    				if(text.isSelected !== true){
+    				if(!text.isSelected){
     					text.setStyle(config.text.menuHover);
     				}
     			}, this);
 
     			// - Out
     			text.events.onInputOut.add(function(text){
-    				if(text.isSelected !== true){
+    				if(!text.isSelected){
     					text.setStyle(config.text.menu);
     				}
     			}, this);
 
     			// Click event - Down
     			text.events.onInputDown.add(function(text){
-    				if(text.isSelected !== true){
+    				if(!text.isSelected){
     					text.setStyle(config.text.menuSelected);
     				}
     			}, this);
@@ -64,7 +57,7 @@ var Menu = (function(){
     			// - Up
     			text.events.onInputUp.add(function(text){
     				text.isSelected = true;
-    				gameData.selectedLobby = text._text;
+    				this.selectedLobby = text._text;
     				this.joinLobby();
     			}, this);
 			}
@@ -73,14 +66,40 @@ var Menu = (function(){
 		}
 	}
 
+	Menu.prototype.addRandomAsteroids = function(){
+		var maxVelocity = 80;
+
+		var asteroids = [];
+
+		for (var i = 0; i < 7; i++) {
+			var size = Math.random() > 0.45 ? 'small' : 'large';
+
+			var sprite = this.game.add.sprite(Math.random() * config.size.w, Math.random() * config.size.h, 'asteroid-'+size);
+			this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+
+		    sprite.alpha = 0.15;
+			sprite.anchor.set(0.5);
+			sprite.rotation = Math.random() * 360;
+
+			var rX = (Math.random() * (maxVelocity * 2)) - maxVelocity,
+				rY = (Math.random() * (maxVelocity * 2)) - maxVelocity;
+
+			sprite.body.velocity.add(rX, rY);
+			sprite.body.angularVelocity = (Math.random() * 200) - 100;
+
+			asteroids.push(sprite);
+		}
+
+		this.asteroids = asteroids;
+	};
+
 	Menu.prototype.addRandomSpaceShips = function(){
 		var sprites = config.playerSprites,
 			colours = Object.keys(sprites.colours);
 
 		var ships = {};
 
-
-		for (var r = 0; r < 4; r++) {
+		for (var r = 0; r < 3; r++) {
 			for (var i = 0, l = colours.length; i < l; i++) {
 				// Grab data for specific ship
 				var colour = colours[i],
@@ -106,28 +125,15 @@ var Menu = (function(){
 			}
 		};
 
-
-
 		this.ships = ships;
 	};
 
 	Menu.prototype.joinLobby = function(){
-		connection.send('lobby','join', gameData.selectedLobby,
-			function(lobbyData){
-				gameData.lobbyData = lobbyData;
-				gameData.me = { data: gameData.lobbyData.players[lobbyData.yourId] };
-				
-				connection.on('gameState.update', function(newState){
-					gameData.lobbyData.gameState.meta.state = newState;
-				});
-
-				this.game.state.start('game');
-			}.bind(this),
-			function(err){
-				console.log(err);				
-				this.game.state.start('menu');
-			}.bind(this)
-		);
+		serverData.joinLobby(this.selectedLobby, function(){
+			this.game.state.start('lobby');
+		}.bind(this), function(){
+			this.game.state.start('menu');
+		}.bind(this));
 	};
 
 	Menu.prototype.update = function() {
@@ -152,22 +158,12 @@ var Menu = (function(){
 				sprite.frame = sprite.spriteFrames.off;
 			}
 
-			this.screenWrap(sprite);
+			screenWrap(sprite, this.game);
 		}
-	};
 
-	Menu.prototype.screenWrap = function(sprite) {
-	    if (sprite.x < 0){
-	        sprite.x = this.game.width;
-	    } else if (sprite.x > this.game.width){
-	        sprite.x = 0;
-	    }
-	    
-	    if (sprite.y < 0){
-	        sprite.y = this.game.height;
-	    } else if (sprite.y > this.game.height){
-	        sprite.y = 0;
-	    }
+		for (var i = 0, l = this.asteroids.length; i < l; i++) {
+			screenWrap(this.asteroids[i], this.game);
+		}
 	};
 	return Menu;
 })();

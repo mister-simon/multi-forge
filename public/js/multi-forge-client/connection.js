@@ -18,7 +18,7 @@ var Connection = (function(socket){
 				event:'lobby/leave',
 				direction: 'both'
 			},
-			'update':{
+			'playersUpdate':{
 				event:'update/lobby/players',
 				direction: 'in'
 			}
@@ -218,6 +218,9 @@ var Connection = (function(socket){
 				delete this.awaitingResponse[group+'.'+APIName];
 			}
 		}
+
+		// Emit an event for anything that is recieved
+		// 	E.g. lobby.leave, gameState.update. Etc.
 		this.emit(group+'.'+APIName, data);
 	};
 

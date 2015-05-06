@@ -1,6 +1,8 @@
 // Game
 var Game = (function(){
-	function Game(game){}
+	function Game(game){
+		this.startingIn = 3;
+	}
 
 	var nextBullet = 0,
 		bulletWait = 250,
@@ -8,11 +10,6 @@ var Game = (function(){
 		livingBullets = [];
 
 	Game.prototype.create = function() {
-		console.log(gameData);
-
-		connection.on('lobby.update', this.playersUpdate.bind(this));
-		connection.on('gameState.update', this.stateChange.bind(this));
-		connection.on('game.serverUpdate', this.storeServerUpdate.bind(this));
 
 		// Start physics engine
     	this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -27,47 +24,63 @@ var Game = (function(){
     	// Reset players
     	this.resetPlayers();
     	
-		// this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
+    	// Create a nice overlay + countdown
+		this.overlay = this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
+		this.countDown = this.add.text(config.hsize.w, config.hsize.h, this.startingIn, config.text.title);
+		this.countDown.anchor.set(0.5, 0.5);
+
+		// Track game state
+		this.updateStateListener = this.onStateUpdated.bind(this);
+		this.onStateUpdated(serverData.game.meta.state);
+
+		// Bind listeners
+		this.bindUpdateListeners();
 	};
 
-	Game.prototype.playersUpdate = function(players){
-		gameData.lobbyData.players = players;
-		this.resetPlayers();
+	Game.prototype.bindUpdateListeners = function(){
+		serverData.on('gameState.update', this.updateStateListener);
 	};
 
-	Game.prototype.stateChange = function(newState){
-		console.log("STATE CHANGED", newState);
+	Game.prototype.unbindUpdateListeners = function(){
+		serverData.removeListener('gameState.update', this.updateStateListener);
+	};
 
-		// Start countdown!!
+	Game.prototype.onStateUpdated = function(newState){
+		console.log('Game:',newState);
+
 		if(newState === 'preparing'){
+			this.decrementCountdown();
 
-		}
-		
-		// Game started!
-		if(newState === 'playing'){
+		} else if(newState === 'playing') {
+			this.resetScores();
+			// this.game.state.start('lobby');
 
-		}
-
-		// Start countdown!!
-		if(newState === 'stopped'){
-
-		}
-
-		// Start countdown!!
-		if(newState === 'lobby'){
+		} else if(newState === 'stopped'){
+			this.game.state.start('aftermatch');
 
 		}
 	};
 
-	Game.prototype.storeServerUpdate = function(newData){
-		gameData.lobbyData.gameState.players = newData.players;
-		gameData.lobbyData.gameState.entities = newData.entities;
+	Game.prototype.decrementCountdown = function(){
+		this.game.time.events.add(Phaser.Timer.SECOND, function(){
+			if(this.startingIn === -1){
+				this.countDown.destroy();
+				return;
 
-		gameData.server = {
-			players:newData.players,
-			entities: newData.entities
-		};
-	};
+			} else if(this.startingIn === 0){
+				this.countDown.setText("GO!");
+				this.overlay.destroy();
+				serverData.nextState();
+
+			} else {
+				this.countDown.setText(this.startingIn);
+
+			}
+			this.startingIn--;
+
+			this.decrementCountdown();
+		}.bind(this));
+	}
 
 	Game.prototype.resetPlayers = function(){
 		this.resetShips();
@@ -87,7 +100,15 @@ var Game = (function(){
 		if(!gameData.ships){
 			gameData.ships = {};
 		}
-	}
+	};
+
+	Game.prototype.resetScores = function(){
+		// Refresh all player game data
+		for(var i in gameData.ships){
+			var ship = gameData.ships[i];
+			ship.score.setText('0');
+		}
+	};
 
 	Game.prototype.createShips = function(){
 		// Get available colours
@@ -140,11 +161,11 @@ var Game = (function(){
 
 	Game.prototype.assignShips = function(){
 		// Assign players to ships
-		var lobbyPlayers = Object.keys(gameData.lobbyData.players);
+		var lobbyPlayers = Object.keys(serverData.lobby.players);
 
 		for(var i = 0, lobbyPlayersLength = lobbyPlayers.length; i<lobbyPlayersLength; i++){
 			var playerId = lobbyPlayers[i],
-				player = gameData.lobbyData.players[playerId];
+				player = serverData.lobby.players[playerId];
 
 			// If ship isn't taken, assign it.
 			for (var j = 0, l = gameData.playerColours.length; j < l; j++) {
@@ -158,8 +179,8 @@ var Game = (function(){
 					ship.visible = ship.sprite.visible = ship.score.visible = true;
 
 					// Assigning ship to ME!?!
-					if(player.id === gameData.me.data.id){
-						gameData.me.ship = ship;
+					if(player.id === serverData.me.id){
+						serverData.me.ship = ship;
 					}
 					break;
 
@@ -170,7 +191,7 @@ var Game = (function(){
 			}
 		}
 
-		if(gameData.me.data.isHost && lobbyPlayersLength === gameData.lobbyData.minPlayers){
+		if(serverData.me.isHost && lobbyPlayersLength === serverData.lobby.minPlayers){
 			connection.send('gameState','prepare',null,function(defaults){
 				this.sendUpdates();
 				connection.send('gameState','start');
@@ -178,25 +199,11 @@ var Game = (function(){
 		}
 	}
 
-	Game.prototype.screenWrap = function(sprite) {
-	    if (sprite.x < 0){
-	        sprite.x = this.game.width;
-	    } else if (sprite.x > this.game.width){
-	        sprite.x = 0;
-	    }
-	    
-	    if (sprite.y < 0){
-	        sprite.y = this.game.height;
-	    } else if (sprite.y > this.game.height){
-	        sprite.y = 0;
-	    }
-	};
-
 	Game.prototype.applyKeys = function() {
-		if(!has(gameData.me.ship)){ return; }
+		if(!has(serverData.me.ship)){ return; }
 
-		var myData = gameData.me.ship,
-			myShip = gameData.me.ship.sprite;
+		var myData = serverData.me.ship,
+			myShip = serverData.me.ship.sprite;
 
 		if (gameData.keys.up.isDown){
 			this.game.physics.arcade.accelerationFromRotation(myShip.rotation - config.playerSprites.rotationOffset, 300, myShip.body.acceleration);
@@ -227,7 +234,7 @@ var Game = (function(){
 
 		if(has(entityData)){
 			// If this is a new bullet from me. Ignore.
-			if(ship.pilot.id === gameData.me.data.id){
+			if(ship.pilot.id === serverData.me.id){
 				return;
 			}
 
@@ -274,8 +281,8 @@ var Game = (function(){
 				nextBullet = this.game.time.now + bulletWait;
 
 				// Tell the server about it
-				if(gameData.lobbyData.gameState.meta.state === 'playing'){
-					var bulletId = gameData.me.data.id + '-' + entityCounter++,
+				if(serverData.game.meta.state === 'playing'){
+					var bulletId = serverData.me.id + '-' + entityCounter++,
 						bulletData = {
 							serverId: bulletId,
 							type: 'bullet',
@@ -303,7 +310,7 @@ var Game = (function(){
 	};
 
 	Game.prototype.update = function() {
-		var isPlaying = (gameData.lobbyData.gameState.meta.state === 'playing');
+		var isPlaying = (serverData.game.meta.state === 'playing');
 
 		if(isPlaying){
 			this.applyUpdates();
@@ -316,10 +323,9 @@ var Game = (function(){
 			var colour = gameData.playerColours[i],
 				ship = gameData.ships[colour];
 
-			ship.bullets.forEachExists(this.screenWrap, this);
-		}		
-		this.screenWrap(gameData.me.ship.sprite);
-		
+			ship.bullets.forEachExists(screenWrap, this, this.game);
+		}
+		screenWrap(serverData.me.ship.sprite, this.game);		
 
 		if(isPlaying){
 			this.sendUpdates();
@@ -327,7 +333,7 @@ var Game = (function(){
 	};
 
 	Game.prototype.applyUpdates = function() {
-		var playerData = gameData.lobbyData.gameState.players;
+		var playerData = serverData.game.players;
 		if(playerData){
 			// Loop through ships
 			for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
@@ -335,7 +341,7 @@ var Game = (function(){
 					ship = gameData.ships[colour];
 				
 				// If this ship isn't in use then quit looping.
-				if(ship.pilot === null || ship.pilot.id === gameData.me.data.id){ continue; }
+				if(ship.pilot === null || ship.pilot.id === serverData.me.id){ continue; }
 
 				if(has(playerData[ship.pilot.id])){
 					// Get things
@@ -356,7 +362,7 @@ var Game = (function(){
 			}
 		}
 
-		var entityData = gameData.lobbyData.gameState.entities;
+		var entityData = serverData.game.entities;
 		if(entityData){
 			// Loop through entities
 			var entityNames = Object.keys(entityData);
@@ -386,16 +392,16 @@ var Game = (function(){
 
 	Game.prototype.sendUpdates = function() {
 		var data = { players: {} },
-			myShipBody = gameData.me.ship.sprite.body;
+			myShipBody = serverData.me.ship.sprite.body;
 
-		data.players[gameData.me.data.id] = {
+		data.players[serverData.me.id] = {
 			pos:{ x: myShipBody.position.x, y: myShipBody.position.y },
 			vel:{ x: myShipBody.velocity.x, y: myShipBody.velocity.y },
 			rot: myShipBody.rotation
 		};
 
 		data.entities = {};
-		gameData.me.ship.bullets.forEachAlive(function(bullet){
+		serverData.me.ship.bullets.forEachAlive(function(bullet){
 			data.entities[bullet.serverId] = {
 				pos:{ x: bullet.body.position.x, y: bullet.body.position.y },
 				vel:{ x: bullet.body.velocity.x, y: bullet.body.velocity.y },

@@ -99,7 +99,7 @@ GameState.prototype.createEntity = function(lobbyPlayer, data){
 	}
 
 	if(data.serverId !== entityId){
-		return { msg:'Expected data.serverId = '+ entityId, serverId: entityId };
+		return { msg:'Expected data.serverId = '+ entityId, serverId: entityId, entityCounter: curPlayerEntityId };
 	}
 
 	if(!has(data.type) || !has(this.config.entityPermissions[data.type])){
