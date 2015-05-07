@@ -1,7 +1,7 @@
 // Game
 var Game = (function(){
 	function Game(game){
-		this.startingIn = 3;
+		this.startingIn = 2;
 	}
 
 	var nextBullet = 0,
@@ -10,6 +10,8 @@ var Game = (function(){
 		livingBullets = [];
 
 	Game.prototype.create = function() {
+		console.log('gameStart',serverData._events);
+
 
 		// Start physics engine
     	this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -26,8 +28,11 @@ var Game = (function(){
     	
     	// Create a nice overlay + countdown
 		this.overlay = this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
-		this.countDown = this.add.text(config.hsize.w, config.hsize.h, this.startingIn, config.text.title);
+		this.countDown = this.add.text(config.hsize.w, config.hsize.h, this.startingIn + 1, config.text.title);
 		this.countDown.anchor.set(0.5, 0.5);
+
+
+
 
 		// Track game state
 		this.updateStateListener = this.onStateUpdated.bind(this);
