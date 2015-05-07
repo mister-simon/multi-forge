@@ -10,8 +10,11 @@ var Game = (function(){
 		livingBullets = [];
 
 	Game.prototype.create = function() {
-		console.log('gameStart',serverData._events);
+		// Reset all the game data
+		gameData = { me:{} };
 
+		// Bind listeners
+		this.bindUpdateListeners();
 
 		// Start physics engine
     	this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -31,34 +34,24 @@ var Game = (function(){
 		this.countDown = this.add.text(config.hsize.w, config.hsize.h, this.startingIn + 1, config.text.title);
 		this.countDown.anchor.set(0.5, 0.5);
 
-
-
-
 		// Track game state
-		this.updateStateListener = this.onStateUpdated.bind(this);
 		this.onStateUpdated(serverData.game.meta.state);
-
-		// Bind listeners
-		this.bindUpdateListeners();
 	};
 
 	Game.prototype.bindUpdateListeners = function(){
-		serverData.on('gameState.update', this.updateStateListener);
+		serverData.on('gameState.update', this.onStateUpdated.bind(this));
 	};
 
 	Game.prototype.unbindUpdateListeners = function(){
-		serverData.removeListener('gameState.update', this.updateStateListener);
+		serverData.removeAllListeners('gameState.update');
 	};
 
 	Game.prototype.onStateUpdated = function(newState){
-		console.log('Game:',newState);
-
 		if(newState === 'preparing'){
 			this.decrementCountdown();
 
 		} else if(newState === 'playing') {
 			this.resetScores();
-			// this.game.state.start('lobby');
 
 		} else if(newState === 'stopped'){
 			this.game.state.start('aftermatch');
@@ -111,7 +104,7 @@ var Game = (function(){
 		// Refresh all player game data
 		for(var i in gameData.ships){
 			var ship = gameData.ships[i];
-			ship.score.setText('0');
+			ship.score.setText(0);
 		}
 	};
 
@@ -180,12 +173,12 @@ var Game = (function(){
 				// Ship is empty
 				if(ship.pilot === null){
 					ship.pilot = player;
-					ship.score._text = "Player "+player.id;
+					ship.score.setText("Player "+player.id);
 					ship.visible = ship.sprite.visible = ship.score.visible = true;
 
 					// Assigning ship to ME!?!
 					if(player.id === serverData.me.id){
-						serverData.me.ship = ship;
+						gameData.me.ship = ship;
 					}
 					break;
 
@@ -195,20 +188,13 @@ var Game = (function(){
 				}
 			}
 		}
-
-		if(serverData.me.isHost && lobbyPlayersLength === serverData.lobby.minPlayers){
-			connection.send('gameState','prepare',null,function(defaults){
-				this.sendUpdates();
-				connection.send('gameState','start');
-			}.bind(this));
-		}
 	}
 
 	Game.prototype.applyKeys = function() {
-		if(!has(serverData.me.ship)){ return; }
+		if(!has(gameData.me.ship)){ return; }
 
-		var myData = serverData.me.ship,
-			myShip = serverData.me.ship.sprite;
+		var myData = gameData.me.ship,
+			myShip = gameData.me.ship.sprite;
 
 		if (gameData.keys.up.isDown){
 			this.game.physics.arcade.accelerationFromRotation(myShip.rotation - config.playerSprites.rotationOffset, 300, myShip.body.acceleration);
@@ -330,7 +316,7 @@ var Game = (function(){
 
 			ship.bullets.forEachExists(screenWrap, this, this.game);
 		}
-		screenWrap(serverData.me.ship.sprite, this.game);		
+		screenWrap(gameData.me.ship.sprite, this.game);		
 
 		if(isPlaying){
 			this.sendUpdates();
@@ -397,7 +383,7 @@ var Game = (function(){
 
 	Game.prototype.sendUpdates = function() {
 		var data = { players: {} },
-			myShipBody = serverData.me.ship.sprite.body;
+			myShipBody = gameData.me.ship.sprite.body;
 
 		data.players[serverData.me.id] = {
 			pos:{ x: myShipBody.position.x, y: myShipBody.position.y },
@@ -406,7 +392,7 @@ var Game = (function(){
 		};
 
 		data.entities = {};
-		serverData.me.ship.bullets.forEachAlive(function(bullet){
+		gameData.me.ship.bullets.forEachAlive(function(bullet){
 			data.entities[bullet.serverId] = {
 				pos:{ x: bullet.body.position.x, y: bullet.body.position.y },
 				vel:{ x: bullet.body.velocity.x, y: bullet.body.velocity.y },
