@@ -13,9 +13,7 @@ var Game = (function(){
 		livingBullets = [],
 		livingAsteroids = [];
 
-	Game.prototype.create = function() {
-		console.log("Created");
-		
+	Game.prototype.create = function() {		
 		nextBullet = 0;
 		bulletWait = 250;
 		livingBullets = [];
