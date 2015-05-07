@@ -95,9 +95,9 @@ var Lobby = (function(){
 			maxVelocity = 140,
 			maxAngularVelocity = 200;
 			
-		for(var i=0, l=5; i<l; i++){
+		for(var i=0, l=8; i<l; i++){
 			var entity = {
-				type:'asteroid-large',
+				type:'asteroid-'+(Math.random() > 0.7?'small':'large'),
 				pos:{
 					x: config.hsize.w + ((Math.random() * (centreOffset * 2)) - centreOffset),
 					y: config.hsize.h + ((Math.random() * (centreOffset * 2)) - centreOffset)

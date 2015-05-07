@@ -1,8 +1,6 @@
 // Game
 var Game = (function(){
-	function Game(game){
-		this.startingIn = 2;
-	}
+	function Game(game){}
 
 	// ---------------------------------
 	// 		Initialisation
@@ -13,9 +11,10 @@ var Game = (function(){
 		livingBullets = [],
 		livingAsteroids = [];
 
-	Game.prototype.create = function() {		
+	Game.prototype.create = function() {
+		this.startingIn = 2;
+		
 		nextBullet = 0;
-		bulletWait = 250;
 		livingBullets = [];
 		livingAsteroids = [];
 
@@ -41,6 +40,9 @@ var Game = (function(){
 		// Reset all the game data
 		gameData = { me:{} };
 		this.asteroids = [];
+    	
+		// Start physics engine
+    	this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
 		// Bind listeners
 		this.bindUpdateListeners();
@@ -48,8 +50,6 @@ var Game = (function(){
 		// Track game state
 		this.onStateUpdated(serverData.game.meta.state);
 
-		// Start physics engine
-    	this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
     	// Capture inputs
 	    this.keys = this.game.input.keyboard.createCursorKeys();
