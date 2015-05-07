@@ -2,7 +2,7 @@ module.exports = {
 	// Default entity data
 	defaults: {
 		players:{
-			custom:{ score:0 },
+			custom:{ score:0, isDead: false },
 			pos:{ x:0, y:0 },
 			vel:{ x:0, y:0 },
 			rot:0
@@ -14,7 +14,7 @@ module.exports = {
 	// the server will accept
 	entityPermissions: {
 		public: ["bullet"],
-		host: ["large-asteroid", "small-asteroid"]
+		host: ["asteroid-large", "asteroid-small"]
 	},
 
 	// Game rules

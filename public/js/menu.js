@@ -1,7 +1,7 @@
 // Menu
 var Menu = (function(){
 	function Menu(Menu){}
-	Menu.prototype.preload = function() { };
+	
 	Menu.prototype.create = function() {
 		this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'background');
 

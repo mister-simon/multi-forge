@@ -13,6 +13,7 @@ var gameData = {};
 	game.state.add('menu', Menu);
 	game.state.add('lobby', Lobby);
 	game.state.add('game', Game);
+	game.state.add('aftermatch', Aftermatch);
 
 	connection.on('disconnect', function(){
 		game.state.start('disconnected');
