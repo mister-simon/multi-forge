@@ -20,7 +20,7 @@ lobbyConfig.rules = {
 
 // Given a lobby configuration like random:{ ... },
 // you can access this named lobby like so:
-socket.emit('lobby/random/join',{ ... });
+socket.emit('lobby/join','random');
 
 // Or find a list of lobbies:
 socket.emit('lobby/getLobbies',{ ... });
@@ -48,14 +48,14 @@ lobbyConfig.lobbies = {
 		maxLobbies: 30,
 		maxPlayersPerLobby: 3,
 		minPlayersToStartGame: 3,
-		lockWhenPlaying: true	// Players can't join mid-game
+		lockWhenPlaying: true
 	},
 	"4-Player":{
 		type : "Random",
 		maxLobbies: 30,
 		maxPlayersPerLobby: 4,
 		minPlayersToStartGame: 4,
-		lockWhenPlaying: true	// Players can't join mid-game
+		lockWhenPlaying: true
 	}
 };
 
