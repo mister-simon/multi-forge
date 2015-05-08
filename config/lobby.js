@@ -32,23 +32,30 @@ socket.emit('game/someAction',{ ... });
 */
 
 lobbyConfig.lobbies = {
-	"4-Player":{
+	"Single Player":{
 		type : "Random",
-		maxLobbies: 30,
-		maxPlayersPerLobby: 4,
-		minPlayersToStartGame: 4,
-		lockWhenPlaying: true	// Players can't join mid-game
+		active:false,
+		maxPlayersPerLobby: 1,
+		minPlayersToStartGame: 1
 	},
 	"Head to Head":{
 		type : "Random",
 		maxPlayersPerLobby: 2,
 		minPlayersToStartGame: 2
 	},
-	"Single Player":{
+	"Trio":{
 		type : "Random",
-		active:true,
-		maxPlayersPerLobby: 1,
-		minPlayersToStartGame: 1
+		maxLobbies: 30,
+		maxPlayersPerLobby: 3,
+		minPlayersToStartGame: 3,
+		lockWhenPlaying: true	// Players can't join mid-game
+	},
+	"4-Player":{
+		type : "Random",
+		maxLobbies: 30,
+		maxPlayersPerLobby: 4,
+		minPlayersToStartGame: 4,
+		lockWhenPlaying: true	// Players can't join mid-game
 	}
 };
 

@@ -32,13 +32,19 @@ var Aftermatch = (function(){
 		for(var p in serverData.game.players){
 			var cur = serverData.game.players[p];
 
-			if(cur.custom.score >= highScore.score){
+			if(cur.custom.score > highScore.score){
 				highScore.player = p;
 				highScore.score = cur.custom.score;
 			}
 		}
 
-		var subtitleText = 'Player '+highScore.player+': '+highScore.score;
+		var subtitleText;
+		if(highScore.player !== null){
+			subtitleText = 'Player '+highScore.player+': '+highScore.score;
+		} else {
+			subtitleText = 'NOBODY!';
+		}
+		
 		this.subtitle = this.add.text(config.hsize.w, config.hsize.h + (config.hsize.h * 0.15), subtitleText, config.text.subtitle);
 		this.subtitle.anchor.setTo(0.5, 0.5);
 	};
