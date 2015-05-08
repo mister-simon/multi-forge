@@ -5,6 +5,8 @@ A configurable node multiplayer server, designed for HTML5 games.
 ## What's In The Current Build
 > Current Build: Foundary
 
+> **[Demo](https://fasteroids.herokuapp.com/)**
+
 In this incarnation of the project, we have the solid foundation for a customisable
 multiplayer server, running on websockets.
 
@@ -15,7 +17,9 @@ With that said, check the content below for a full explanation of what the serve
 
 ## Getting Started
 
-Make sure you've got node installed, you can [Find Node Here](https://nodejs.org/). Then from the terminal, run:
+First, clone this project. Next, make sure you've got node installed, you can [Find Node Here](https://nodejs.org/).
+
+Then from the terminal, run:
 
 ```bash
 npm install
