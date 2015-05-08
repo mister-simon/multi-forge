@@ -47,16 +47,16 @@ config.playerSprites.scorePos = {
 config.text = {
 	// Various styles
 	title: {
-		font: "32px "+config.font,
+		font: "80px "+config.font,
 		fill: config.colours['green-prime']
+	},
+	subtitle: {
+		font: "50px "+config.font,
+		fill: config.colours['green-second']
 	},
 	scaryError: {
 		font: "50px "+config.font,
 		fill: config.colours['red']
-	},
-	subtitle: {
-		font: "25px "+config.font,
-		fill: config.colours['green-second']
 	},
 	menu: {
 		font: "75px "+config.font,

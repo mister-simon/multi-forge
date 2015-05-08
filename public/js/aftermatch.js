@@ -1,8 +1,8 @@
-// Menu
-var Menu = (function(){
-	function Menu(Menu){}
-	
-	Menu.prototype.create = function() {
+// Aftermatch
+var Aftermatch = (function(){
+	function Aftermatch(Aftermatch){}
+
+	Aftermatch.prototype.create = function() {
 		this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'background');
 
 		// Lets have some fun
@@ -16,57 +16,40 @@ var Menu = (function(){
 		// Add teh rest
 		this.game.add.sprite(180, 70, 'title');
 
-		// Render the buttons
-		this.renderButtons();
+		addBackBtn(this.game);
+
+		// Show winner
+		this.showWinner();
 	};
 
-	Menu.prototype.renderButtons = function(){
-		// Make some buttons for available lobby types
-		var lobbyLength = serverData.lobbies.length;
+	Aftermatch.prototype.showWinner = function(){
+		this.status = "The Winner Is";
+		this.title = this.add.text(config.hsize.w, (config.hsize.h / 1.15), this.status, config.text.title);
+		this.title.anchor.setTo(0.5, 0.5);
 
-		if(lobbyLength > 0){
-			for(var i=0; i < lobbyLength; i++){
-				var lobbyName = serverData.lobbies[i];
+		var highScore = { player: null, score: 0 };
 
-				var text = this.add.text(config.hsize.w, (config.hsize.h / 1.15) + (100 * i), lobbyName, config.text.menu);
-				text.anchor.setTo(0.5, 0.5);
+		for(var p in serverData.game.players){
+			var cur = serverData.game.players[p];
 
-    			text.inputEnabled = true;
-
-    			// Hover events - Over
-    			text.events.onInputOver.add(function(text){
-    				if(!text.isSelected){
-    					text.setStyle(config.text.menuHover);
-    				}
-    			}, this);
-
-    			// - Out
-    			text.events.onInputOut.add(function(text){
-    				if(!text.isSelected){
-    					text.setStyle(config.text.menu);
-    				}
-    			}, this);
-
-    			// Click event - Down
-    			text.events.onInputDown.add(function(text){
-    				if(!text.isSelected){
-    					text.setStyle(config.text.menuSelected);
-    				}
-    			}, this);
-
-    			// - Up
-    			text.events.onInputUp.add(function(text){
-    				text.isSelected = true;
-    				this.selectedLobby = text._text;
-    				this.joinLobby();
-    			}, this);
+			if(cur.custom.score > highScore.score){
+				highScore.player = p;
+				highScore.score = cur.custom.score;
 			}
-		} else {
-	    	this.add.text(config.hsize.w, config.hsize.h - 30, "No lobbies found :(", config.text.scaryError).anchor.setTo(0.5, 0.5);
 		}
-	}
 
-	Menu.prototype.addRandomAsteroids = function(){
+		var subtitleText;
+		if(highScore.player !== null){
+			subtitleText = 'Player '+highScore.player+': '+highScore.score;
+		} else {
+			subtitleText = 'NOBODY!';
+		}
+		
+		this.subtitle = this.add.text(config.hsize.w, config.hsize.h + (config.hsize.h * 0.15), subtitleText, config.text.subtitle);
+		this.subtitle.anchor.setTo(0.5, 0.5);
+	};
+
+	Aftermatch.prototype.addRandomAsteroids = function(){
 		var maxVelocity = 80;
 
 		var asteroids = [];
@@ -93,7 +76,7 @@ var Menu = (function(){
 		this.asteroids = asteroids;
 	};
 
-	Menu.prototype.addRandomSpaceShips = function(){
+	Aftermatch.prototype.addRandomSpaceShips = function(){
 		var sprites = config.playerSprites,
 			colours = Object.keys(sprites.colours);
 
@@ -128,15 +111,7 @@ var Menu = (function(){
 		this.ships = ships;
 	};
 
-	Menu.prototype.joinLobby = function(){
-		serverData.joinLobby(this.selectedLobby, function(){
-			this.game.state.start('lobby');
-		}.bind(this), function(){
-			this.game.state.start('menu');
-		}.bind(this));
-	};
-
-	Menu.prototype.update = function() {
+	Aftermatch.prototype.update = function() {
 		var shipColours = Object.keys(this.ships);
 
 		// Loop through ships
@@ -165,5 +140,5 @@ var Menu = (function(){
 			screenWrap(this.asteroids[i], this.game);
 		}
 	};
-	return Menu;
+	return Aftermatch;
 })();

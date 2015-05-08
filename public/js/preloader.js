@@ -6,15 +6,15 @@ var Preloader = (function(){
 		this.input.maxPointers = 1;
 		this.stage.disableVisibilityChange = true;
 		this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+		this.scale.pageAlignHorizontally = true;
+		this.scale.pageAlignVertically = true;
 		this.scale.setScreenSize(true);
 	};
 
 	Pre.prototype.preload = function() {
-		this.gotLobbies = false;
-
 		// Loading message
 	    this.add.text(config.hsize.w, config.hsize.h - 30, "Loading...", config.text.title).anchor.setTo(0.5, 0.5);
-	    this.add.text(config.hsize.w, config.hsize.h + 30, "Connecting to Server...", config.text.title).anchor.setTo(0.5, 0.5);
+	    this.add.text(config.hsize.w, config.hsize.h + 30, "Connecting to Server...", config.text.subtitle).anchor.setTo(0.5, 0.5);
 
 		// Assets
 		this.load.image('background',		'img/background.png');
@@ -32,20 +32,8 @@ var Preloader = (function(){
 	};
 
 	Pre.prototype.update = function() {
-		if(this.load.hasLoaded && connection.isConnected() && this.gotLobbies === false){
-			this.gotLobbies = true;
-			connection.send('lobby','getLobbies', null,
-				// Success!
-				function(lobbies){
-					gameData.lobbyTypes = lobbies;
-					this.game.state.start('menu');
-				}.bind(this),
-				// Failure...
-				function(err){
-					this.gotLobbies = false;
-				}
-
-			);			
+		if(this.load.hasLoaded && serverData.lobbies !== null){
+			this.game.state.start('menu');
 		}
 	};
 	return Pre;

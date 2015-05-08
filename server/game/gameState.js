@@ -99,7 +99,7 @@ GameState.prototype.createEntity = function(lobbyPlayer, data){
 	}
 
 	if(data.serverId !== entityId){
-		return { msg:'Expected data.serverId = '+ entityId, serverId: entityId };
+		return { msg:'Expected data.serverId = '+ entityId, serverId: entityId, entityCounter: curPlayerEntityId };
 	}
 
 	if(!has(data.type) || !has(this.config.entityPermissions[data.type])){
@@ -121,7 +121,7 @@ GameState.prototype.createEntity = function(lobbyPlayer, data){
 	
 	// Iterate that ID
 	this.playerEntityIds[lobbyPlayer.id] += 1;
-	
+
 
 	// Tell lobby it was successful
 	return true;
@@ -200,8 +200,20 @@ GameState.prototype.update = function(lobbyPlayer, data){
 		// If they're not host, only apply new data to themselves
 		} else {
 			var newPlayerData = data.players[lobbyPlayer.id];
+
 			if(has(newPlayerData)){
+				var keepScore = has(this.updatedPlayers[lobbyPlayer.id].custom) && has(this.updatedPlayers[lobbyPlayer.id].custom.score),
+					score;
+
+				if(keepScore){
+					score = this.updatedPlayers[lobbyPlayer.id].custom.score;
+				}
+
 				this.updatedPlayers[lobbyPlayer.id] = newPlayerData;
+				
+				if(keepScore){
+					this.updatedPlayers[lobbyPlayer.id].custom.score = score;
+				}
 			}
 		}
 	}

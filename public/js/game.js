@@ -2,71 +2,109 @@
 var Game = (function(){
 	function Game(game){}
 
+	// ---------------------------------
+	// 		Initialisation
+	// ---------------------------------
+
 	var nextBullet = 0,
 		bulletWait = 250,
-		entityCounter = 0,
-		livingBullets = [];
+		livingBullets = [],
+		livingAsteroids = [];
 
 	Game.prototype.create = function() {
-		console.log(gameData);
+		this.startingIn = 2;
+		
+		nextBullet = 0;
+		livingBullets = [];
+		livingAsteroids = [];
 
-		connection.on('lobby.update', this.playersUpdate.bind(this));
-		connection.on('gameState.update', this.stateChange.bind(this));
-		connection.on('game.serverUpdate', this.storeServerUpdate.bind(this));
+		this.gameEnded = false;
+		this.createData();
+	    this.createUI();
+	};
 
-		// Start physics engine
-    	this.game.physics.startSystem(Phaser.Physics.ARCADE);
-
-    	// Capture inputs
-	    gameData.keys = this.game.input.keyboard.createCursorKeys();
-	    this.game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
-
+	Game.prototype.createUI = function(){
 	    // Add background
 		this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'background');
 
     	// Reset players
-    	this.resetPlayers();
+    	this.resetPlayers();    	
+
+    	// Create a nice overlay + countdown
+		this.overlay = this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
+		this.countDown = this.add.text(config.hsize.w, config.hsize.h, this.startingIn + 1, config.text.title);
+		this.countDown.anchor.set(0.5, 0.5);
+	};
+
+	Game.prototype.createData = function(){
+		// Reset all the game data
+		gameData = { me:{} };
+		this.asteroids = [];
     	
-		// this.game.add.tileSprite(0, 0, config.size.w, config.size.h, 'overlay');
+		// Start physics engine
+    	this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+		// Bind listeners
+		this.bindUpdateListeners();
+
+		// Track game state
+		this.onStateUpdated(serverData.game.meta.state);
+
+
+    	// Capture inputs
+	    this.keys = this.game.input.keyboard.createCursorKeys();
+	    this.game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
 	};
 
-	Game.prototype.playersUpdate = function(players){
-		gameData.lobbyData.players = players;
-		this.resetPlayers();
+	Game.prototype.bindUpdateListeners = function(){
+		serverData.on('gameState.update', this.onStateUpdated.bind(this));
 	};
 
-	Game.prototype.stateChange = function(newState){
-		console.log("STATE CHANGED", newState);
+	Game.prototype.unbindUpdateListeners = function(){
+		serverData.removeAllListeners('gameState.update');
+	};
 
-		// Start countdown!!
+	Game.prototype.onStateUpdated = function(newState){
 		if(newState === 'preparing'){
+			this.decrementCountdown();
 
-		}
-		
-		// Game started!
-		if(newState === 'playing'){
+		} else if(newState === 'playing') {
+			this.resetScores();
 
-		}
-
-		// Start countdown!!
-		if(newState === 'stopped'){
-
-		}
-
-		// Start countdown!!
-		if(newState === 'lobby'){
+		} else if(newState === 'stopped'){
+			this.unbindUpdateListeners();
+			this.game.state.start('aftermatch');
 
 		}
 	};
 
-	Game.prototype.storeServerUpdate = function(newData){
-		gameData.lobbyData.gameState.players = newData.players;
-		gameData.lobbyData.gameState.entities = newData.entities;
+	Game.prototype.decrementCountdown = function(){
+		this.game.time.events.add(Phaser.Timer.SECOND, function(){
+			if(this.startingIn === -1){
+				this.countDown.destroy();
+				return;
 
-		gameData.server = {
-			players:newData.players,
-			entities: newData.entities
-		};
+			} else if(this.startingIn === 0){
+				this.countDown.setText("GO!");
+				this.overlay.destroy();
+				serverData.nextState();
+
+			} else {
+				this.countDown.setText(this.startingIn);
+
+			}
+			this.startingIn--;
+
+			this.decrementCountdown();
+		}.bind(this));
+	};
+
+	Game.prototype.resetScores = function(){
+		// Refresh all player game data
+		for(var i in gameData.ships){
+			var ship = gameData.ships[i];
+			ship.score.setText(0);
+		}
 	};
 
 	Game.prototype.resetPlayers = function(){
@@ -87,7 +125,7 @@ var Game = (function(){
 		if(!gameData.ships){
 			gameData.ships = {};
 		}
-	}
+	};
 
 	Game.prototype.createShips = function(){
 		// Get available colours
@@ -136,15 +174,15 @@ var Game = (function(){
 			shipData.score = score;
 			shipData.bullets = bullets;
 		}
-	}
+	};
 
 	Game.prototype.assignShips = function(){
 		// Assign players to ships
-		var lobbyPlayers = Object.keys(gameData.lobbyData.players);
+		var lobbyPlayers = Object.keys(serverData.lobby.players);
 
 		for(var i = 0, lobbyPlayersLength = lobbyPlayers.length; i<lobbyPlayersLength; i++){
 			var playerId = lobbyPlayers[i],
-				player = gameData.lobbyData.players[playerId];
+				player = serverData.lobby.players[playerId];
 
 			// If ship isn't taken, assign it.
 			for (var j = 0, l = gameData.playerColours.length; j < l; j++) {
@@ -154,11 +192,11 @@ var Game = (function(){
 				// Ship is empty
 				if(ship.pilot === null){
 					ship.pilot = player;
-					ship.score._text = "Player "+player.id;
+					ship.score.setText("Player "+player.id);
 					ship.visible = ship.sprite.visible = ship.score.visible = true;
 
 					// Assigning ship to ME!?!
-					if(player.id === gameData.me.data.id){
+					if(player.id === serverData.me.id){
 						gameData.me.ship = ship;
 					}
 					break;
@@ -169,27 +207,42 @@ var Game = (function(){
 				}
 			}
 		}
+	};
 
-		if(gameData.me.data.isHost && lobbyPlayersLength === gameData.lobbyData.minPlayers){
-			connection.send('gameState','prepare',null,function(defaults){
-				this.sendUpdates();
-				connection.send('gameState','start');
-			}.bind(this));
+
+	// ---------------------------------
+	// 		Frame updates
+	// ---------------------------------
+
+	Game.prototype.update = function() {
+		var isPlaying = (serverData.game.meta.state === 'playing');
+
+		if(isPlaying){
+			this.applyPlayerUpdates();
+			this.applyEntityUpdates();
 		}
-	}
 
-	Game.prototype.screenWrap = function(sprite) {
-	    if (sprite.x < 0){
-	        sprite.x = this.game.width;
-	    } else if (sprite.x > this.game.width){
-	        sprite.x = 0;
-	    }
-	    
-	    if (sprite.y < 0){
-	        sprite.y = this.game.height;
-	    } else if (sprite.y > this.game.height){
-	        sprite.y = 0;
-	    }
+		this.applyKeys();
+
+		// Loop through ships
+		for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
+			var ship = gameData.ships[gameData.playerColours[i]];
+			ship.bullets.forEachExists(screenWrap, this, this.game);
+		}		
+		screenWrap(gameData.me.ship.sprite, this.game);
+
+		// Screenwrap asteroids too
+		for (var i = 0, l = this.asteroids.length; i < l; i++) {
+			var asteroid = this.asteroids[i];
+			screenWrap(asteroid, this.game);
+		}
+
+		if(isPlaying && !this.gameEnded){
+			this.checkCollisions();
+			this.sendUpdates();
+
+			this.isEverybodyDeadOrSomething();
+		}
 	};
 
 	Game.prototype.applyKeys = function() {
@@ -198,7 +251,9 @@ var Game = (function(){
 		var myData = gameData.me.ship,
 			myShip = gameData.me.ship.sprite;
 
-		if (gameData.keys.up.isDown){
+		if(!myShip.alive){ return; }
+
+		if (this.keys.up.isDown){
 			this.game.physics.arcade.accelerationFromRotation(myShip.rotation - config.playerSprites.rotationOffset, 300, myShip.body.acceleration);
 			myShip.frame = myData.spriteFrames.on;
 		} else {
@@ -206,18 +261,137 @@ var Game = (function(){
 			myShip.body.acceleration.set(0);
 		}
 
-		if (gameData.keys.left.isDown){
+		if (this.keys.left.isDown){
 			myShip.body.angularVelocity = -300;
-		} else if (gameData.keys.right.isDown){
+		} else if (this.keys.right.isDown){
 			myShip.body.angularVelocity = 300;
 		} else {
 			myShip.body.angularVelocity = 0;
 		}
 
-		if(this.game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)){
-			if(this.game.time.now > nextBullet){
-				this.createBullet(myData);
+		if(this.game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR) && this.game.time.now > nextBullet){
+			this.createBullet(myData);
+		}
+	};
+
+	Game.prototype.applyPlayerUpdates = function(){
+		var playerData = serverData.game.players;
+		if(playerData){
+			// Loop through ships
+			for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
+				var colour = gameData.playerColours[i],
+					ship = gameData.ships[colour];
+				
+				// If this ship isn't in use then quit looping.
+				if(ship.pilot === null || !has(playerData[ship.pilot.id])){ continue; }
+
+				var serverPlayer = playerData[ship.pilot.id];
+
+				if(serverPlayer.custom.isDead){
+					ship.sprite.kill();
+					continue;
+				}
+
+				ship.score.setText(serverPlayer.custom.score);
+
+				if(ship.pilot.id !== serverData.me.id){
+					// Get things
+					var spriteBody = ship.sprite.body;
+
+					// Update positions
+					spriteBody.position.x = serverPlayer.pos.x;
+					spriteBody.position.y = serverPlayer.pos.y;
+
+					// Update velocities
+					spriteBody.velocity.x = serverPlayer.vel.x;
+					spriteBody.velocity.y = serverPlayer.vel.y;
+
+					// Update rotations
+					spriteBody.rotation = serverPlayer.rot;
+				}
 			}
+		}
+	};
+
+	Game.prototype.applyEntityUpdates = function(){
+		var entityData = serverData.game.entities;
+
+
+		if(entityData){			
+			// Loop through entities
+			var entityNames = Object.keys(entityData);
+			for (var i = 0, l = entityNames.length; i < l; i++) {
+				var entity = entityData[entityNames[i]], playerTarget;
+
+				if(has(entity)){
+					playerTarget = entity.createdByPlayerId
+				} else {
+					console.log(entity, entityNames, entityNames[i]);
+				}
+
+				if(entity.type === 'bullet'){
+					// Loop through ships
+					for (var j = 0, colLength = gameData.playerColours.length; j < colLength; j++) {
+						var colour = gameData.playerColours[j],
+							ship = gameData.ships[colour];
+						
+						if(ship.pilot === null || ship.pilot.id !== playerTarget){ continue; }
+						if(serverData.game.players[ship.pilot.id].custom.isDead) { continue; }
+
+						this.createBullet(ship, entity);
+
+						break;
+					}
+				}
+
+				if(entity.type === 'asteroid-large' || entity.type === 'asteroid-small'){
+					this.createAsteroid(entity);
+				}
+			}
+		}
+	};
+
+	Game.prototype.sendUpdates = function() {
+		var data = { players: {}, entities: {} },
+			myShipBody = gameData.me.ship.sprite.body,
+			customData = serverData.game.players[serverData.me.id];
+
+		if(!has(customData)){
+			customData = { custom: { score:0, isDead: false } };
+		}
+
+		data.players[serverData.me.id] = {
+			custom: customData.custom,
+			pos:{ x: myShipBody.position.x, y: myShipBody.position.y },
+			vel:{ x: myShipBody.velocity.x, y: myShipBody.velocity.y },
+			rot: myShipBody.rotation
+		};
+
+		gameData.me.ship.bullets.forEachAlive(function(bullet){
+			data.entities[bullet.serverId] = {
+				pos:{ x: bullet.body.position.x, y: bullet.body.position.y },
+				vel:{ x: bullet.body.velocity.x, y: bullet.body.velocity.y },
+				ang: bullet.angle,
+				lifespan: bullet.lifespan
+			}
+		}, this);
+
+		serverData.gameUpdate(data);
+	};
+
+	Game.prototype.createAsteroid = function(entityData) {
+		if(livingAsteroids.indexOf(entityData.serverId) === -1){
+			var sprite = this.game.add.sprite(entityData.pos.x, entityData.pos.y, entityData.type);
+			sprite.anchor.set(0.5);
+
+			this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+			sprite.rotation = entityData.rot;		
+			sprite.body.position.add(entityData.pos.x, entityData.pos.y);
+			sprite.body.velocity.add(entityData.vel.x, entityData.vel.y);
+			sprite.body.angularVelocity = entityData.av;
+
+			livingAsteroids.push(entityData.serverId);
+			this.asteroids.push(sprite);
 		}
 	};
 
@@ -227,12 +401,8 @@ var Game = (function(){
 
 		if(has(entityData)){
 			// If this is a new bullet from me. Ignore.
-			if(ship.pilot.id === gameData.me.data.id){
-				return;
-			}
-
 			// Check to ensure this bullet doesn't exist yet
-			if(has(entityData.serverId) && has(livingBullets[entityData.serverId])){
+			if(ship.pilot.id === serverData.me.id || has(entityData.serverId) && has(livingBullets[entityData.serverId])){
 				return;
 			}
 		}
@@ -243,7 +413,7 @@ var Game = (function(){
 			if(has(entityData)){
 				bullet.lifespan = entityData.lifespan;
 
-				bullet.reset(entityData.pos.x, entityData.pos.y).anchor.setTo(0.5,0.5);
+				bullet.reset(entityData.pos.x + 9, entityData.pos.y + 9).anchor.setTo(0.5,0.5);
 				
 				bullet.body.velocity.x = entityData.vel.x;
 				bullet.body.velocity.y = entityData.vel.y;
@@ -274,137 +444,144 @@ var Game = (function(){
 				nextBullet = this.game.time.now + bulletWait;
 
 				// Tell the server about it
-				if(gameData.lobbyData.gameState.meta.state === 'playing'){
-					var bulletId = gameData.me.data.id + '-' + entityCounter++,
-						bulletData = {
-							serverId: bulletId,
-							type: 'bullet',
-							pos: { x: bullet.body.position.x, y: bullet.body.position.y },
-							vel: { x: bullet.body.velocity.x, y: bullet.body.velocity.y },
-							ang: bullet.angle,
-							lifespan: bullet.lifespan
-						};
-
-					livingBullets[bulletId] = true;
-					bullet.serverId = bulletId;
-
-					connection.send('game','createEntity',bulletData,null,function(err){
-						console.log(err);
+				if(serverData.game.meta.state === 'playing'){
+					var entityData = serverData.createEntity({
+						type: 'bullet',
+						pos: { x: bullet.body.position.x, y: bullet.body.position.y },
+						vel: { x: bullet.body.velocity.x, y: bullet.body.velocity.y },
+						ang: bullet.angle,
+						lifespan: bullet.lifespan
 					});
 
+					livingBullets[entityData.serverId] = true;
+
 					bullet.events.onKilled.add(function(bulletId){
-						connection.send('game','destroyEntity',{ serverId: bulletId });
+						serverData.destroyEntity(bulletId);
 						delete livingBullets[bulletId];
-					}.bind(this,bulletId),this);
+					}.bind(this, entityData.serverId),this);
 				}
 			}
-
 		}
 	};
 
-	Game.prototype.update = function() {
-		var isPlaying = (gameData.lobbyData.gameState.meta.state === 'playing');
 
-		if(isPlaying){
-			this.applyUpdates();
+
+	// ---------------------------------
+	// 		Collisions + stuff
+	// ---------------------------------
+
+	Game.prototype.checkCollisions = function(){
+		var collided;
+
+		for (var j = 0, la = this.asteroids.length; j < la; j++) {
+			var asteroid = this.asteroids[j];
+
+			if(!asteroid.alive){
+				continue;
+			}
+
+			collided = false;
+
+			for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
+				var colour = gameData.playerColours[i],
+					ship = gameData.ships[colour];
+
+				if(ship.pilot === null){
+					continue;
+				}
+
+				
+				// Increment scores, explode large asteroids
+				this.physics.arcade.overlap(asteroid, ship.bullets, function(hit_asteroid, hit_bullet){
+
+					if(serverData.me.isHost){
+						serverData.destroyEntity(asteroid.serverId);
+
+						var players = {},
+							player = serverData.game.players[ship.pilot.id];
+
+						player.custom.score += (asteroid.key === 'asteroid-large' ? 100 : 150);
+
+						players[ship.pilot.id] = player;
+						serverData.gameUpdate({
+							players: players
+						});
+					}
+
+					hit_bullet.kill();
+					asteroid.kill();
+					collided = true;
+				});
+
+				// Send the server updates
+				if(!collided){
+					this.physics.arcade.collide(ship.sprite, asteroid, function(){
+
+						if(serverData.me.isHost){
+							serverData.destroyEntity(asteroid.serverId);
+
+							var players = {},
+								player = serverData.game.players[ship.pilot.id];
+
+							player.custom.isDead = true;
+
+							players[ship.pilot.id] = player;
+							serverData.gameUpdate({
+								players: players
+							});
+						}
+
+						asteroid.kill();
+						ship.sprite.kill();
+						collided = true;
+					});
+				}
+			}
 		}
+	};
 
-		this.applyKeys();
 
-		// Loop through ships
+	Game.prototype.isEverybodyDeadOrSomething = function(){
+		var yesEveryoneIsDead = true;
+
 		for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
 			var colour = gameData.playerColours[i],
 				ship = gameData.ships[colour];
 
-			ship.bullets.forEachExists(this.screenWrap, this);
-		}		
-		this.screenWrap(gameData.me.ship.sprite);
-		
+			if(ship.pilot === null){
+				continue;
+			}
 
-		if(isPlaying){
-			this.sendUpdates();
-		}
-	};
-
-	Game.prototype.applyUpdates = function() {
-		var playerData = gameData.lobbyData.gameState.players;
-		if(playerData){
-			// Loop through ships
-			for (var i = 0, l = gameData.playerColours.length; i < l; i++) {
-				var colour = gameData.playerColours[i],
-					ship = gameData.ships[colour];
-				
-				// If this ship isn't in use then quit looping.
-				if(ship.pilot === null || ship.pilot.id === gameData.me.data.id){ continue; }
-
-				if(has(playerData[ship.pilot.id])){
-					// Get things
-					var newData = playerData[ship.pilot.id];
-					var spriteBody = ship.sprite.body;
-
-					// Update positions
-					spriteBody.position.x = newData.pos.x;
-					spriteBody.position.y = newData.pos.y;
-
-					// Update velocities
-					spriteBody.velocity.x = newData.vel.x;
-					spriteBody.velocity.y = newData.vel.y;
-
-					// Update rotations
-					spriteBody.rotation = newData.rot;
-				}
+			if(ship.sprite.alive){
+				yesEveryoneIsDead = false;
+				break;
 			}
 		}
 
-		var entityData = gameData.lobbyData.gameState.entities;
-		if(entityData){
-			// Loop through entities
-			var entityNames = Object.keys(entityData);
-			for (var i = 0, l = entityNames.length; i < l; i++) {
-				var entity = entityData[entityNames[i]], playerTarget;
+		if(yesEveryoneIsDead){
+			this.gameOver();
+			return;
+		}
 
-				if(has(entity)){
-					playerTarget = entity.createdByPlayerId
-				} else {
-					console.log(entity, entityNames, entityNames[i]);
-				}
-
-				// Loop through ships
-				for (var j = 0, colLength = gameData.playerColours.length; j< colLength; j++) {
-					var colour = gameData.playerColours[j],
-						ship = gameData.ships[colour];
-					
-					if(ship.pilot === null || ship.pilot.id !== playerTarget){ continue; }
-
-					this.createBullet(ship, entity);
-
+		if(this.asteroids.length > 0){
+			var allTheAsteroidsDied = true;
+			for (var i = 0, l = this.asteroids.length; i < l; i++) {
+				if(this.asteroids[i].alive === true){
+					allTheAsteroidsDied = false;
 					break;
 				}
 			}
+
+			if(allTheAsteroidsDied){
+				this.gameOver();
+				return;
+			}
 		}
 	};
 
-	Game.prototype.sendUpdates = function() {
-		var data = { players: {} },
-			myShipBody = gameData.me.ship.sprite.body;
-
-		data.players[gameData.me.data.id] = {
-			pos:{ x: myShipBody.position.x, y: myShipBody.position.y },
-			vel:{ x: myShipBody.velocity.x, y: myShipBody.velocity.y },
-			rot: myShipBody.rotation
-		};
-
-		data.entities = {};
-		gameData.me.ship.bullets.forEachAlive(function(bullet){
-			data.entities[bullet.serverId] = {
-				pos:{ x: bullet.body.position.x, y: bullet.body.position.y },
-				vel:{ x: bullet.body.velocity.x, y: bullet.body.velocity.y },
-				ang: bullet.angle,
-				lifespan: bullet.lifespan
-			}
-		}, this);
-
-		connection.send('game','update', data);
+	Game.prototype.gameOver = function(){
+		this.gameEnded = true;
+		serverData.nextState();
 	};
 
 	return Game;
