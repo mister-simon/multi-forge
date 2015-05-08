@@ -100,11 +100,11 @@ var Game = (function(){
 	};
 
 	Game.prototype.resetScores = function(){
-		// Refresh all player game data
+		/*// Refresh all player game data
 		for(var i in gameData.ships){
 			var ship = gameData.ships[i];
 			ship.score.setText(0);
-		}
+		}*/
 	};
 
 	Game.prototype.resetPlayers = function(){
@@ -292,7 +292,7 @@ var Game = (function(){
 					continue;
 				}
 
-				ship.score.setText(serverPlayer.custom.score);
+				// ship.score.setText(serverPlayer.custom.score);
 
 				if(ship.pilot.id !== serverData.me.id){
 					// Get things
